@@ -1,0 +1,556 @@
+
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RAY VPN - Premium Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Vazirmatn Font -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        'primary': '#0ea5e9',
+                        'primary-dark': '#0284c7',
+                    },
+                    fontFamily: {
+                        'vazir': ['Vazirmatn', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { 
+            font-family: 'Vazirmatn', sans-serif;
+            overflow-x: hidden;
+            transition: background-color 0.4s ease;
+        }
+
+        /* --- True Glassmorphism --- */
+        .glass-panel {
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            transition: all 0.4s ease;
+        }
+
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .light .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-top: 1px solid #ffffff;
+            border-left: 1px solid #ffffff;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Ambient Glowing Blobs */
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.5;
+            z-index: -1;
+            animation: float 20s infinite alternate ease-in-out;
+        }
+        .light .blob { opacity: 0.4; filter: blur(120px); }
+        
+        .blob-1 { top: -10%; right: -10%; width: 50vw; height: 50vw; background: #0ea5e9; }
+        .blob-2 { bottom: -20%; left: -10%; width: 60vw; height: 60vw; background: #8b5cf6; animation-delay: -5s; }
+        .blob-3 { top: 40%; left: 30%; width: 40vw; height: 40vw; background: #10b981; animation-delay: -10s; opacity: 0.3; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-30px, 30px) scale(1.05); }
+        }
+
+        /* Nav Items */
+        .nav-item { transition: all 0.3s ease; }
+        .nav-item.active {
+            background: rgba(14, 165, 233, 0.15);
+            color: #0ea5e9 !important;
+            font-weight: bold;
+            box-shadow: inset 0 0 0 1px rgba(14, 165, 233, 0.2);
+        }
+        .dark .nav-item.active {
+            background: rgba(14, 165, 233, 0.2);
+            color: #38bdf8 !important;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.5); border-radius: 10px; }
+        .dark ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); }
+
+        .page-content { display: none; opacity: 0; }
+        .page-content.active {
+            display: block;
+            animation: fadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 flex h-screen w-full relative">
+
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 hidden lg:hidden transition-opacity" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="fixed lg:relative inset-y-0 right-0 transform translate-x-full lg:translate-x-0 w-64 glass-panel border-r-0 lg:border-l-0 lg:rounded-l-3xl lg:my-4 lg:ml-4 flex flex-col z-50 transition-transform duration-300 ease-out h-full lg:h-[calc(100vh-2rem)] flex-shrink-0 shadow-[0_0_30px_rgba(0,0,0,0.1)]">
+        
+        <div class="h-20 flex items-center justify-center gap-3 border-b border-slate-200/50 dark:border-white/10 px-6 shrink-0">
+            <div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                <i class="ph-bold ph-shield-check text-2xl text-white"></i>
+            </div>
+            <h1 class="text-2xl font-black tracking-tight text-slate-800 dark:text-white">RAY <span class="text-primary">VPN</span></h1>
+        </div>
+        
+        <nav class="flex-1 overflow-y-auto py-5 px-3 space-y-1.5" id="sidebar-nav">
+            <a href="#" data-page="dashboard" class="nav-item active flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                <i class="ph-fill ph-squares-four text-xl"></i>
+                داشبورد
+            </a>
+            <a href="#" data-page="services" class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                <i class="ph-duotone ph-hard-drives text-xl"></i>
+                سرویس‌ها
+            </a>
+            <a href="#" data-page="users" class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                <i class="ph-duotone ph-users text-xl"></i>
+                کاربران
+            </a>
+            <a href="#" data-page="orders" class="nav-item flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                <div class="flex items-center gap-3.5">
+                    <i class="ph-duotone ph-shopping-cart text-xl"></i>
+                    سفارشات
+                </div>
+                <span class="bg-rose-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">12</span>
+            </a>
+            <a href="#" data-page="finance" class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                <i class="ph-duotone ph-wallet text-xl"></i>
+                مالی
+            </a>
+            <a href="#" data-page="support" class="nav-item flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                <div class="flex items-center gap-3.5">
+                    <i class="ph-duotone ph-headset text-xl"></i>
+                    پشتیبانی
+                </div>
+            </a>
+            <a href="#" data-page="servers" class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                <i class="ph-duotone ph-database text-xl"></i>
+                سرورها
+            </a>
+            <a href="#" data-page="products" class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                <i class="ph-duotone ph-package text-xl"></i>
+                محصولات
+            </a>
+            
+            <div class="py-2 px-4"><div class="h-px w-full bg-slate-200 dark:bg-white/10"></div></div>
+
+            <a href="#" data-page="settings" class="nav-item flex items-center gap-3.5 px-4 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-white/5">
+                <i class="ph-duotone ph-gear text-xl"></i>
+                پیکربندی
+            </a>
+        </nav>
+
+        <div class="p-4 border-t border-slate-200/50 dark:border-white/10 shrink-0">
+            <button class="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 hover:bg-rose-500 hover:text-white dark:hover:bg-rose-500 dark:hover:text-white transition-all font-bold text-sm">
+                <i class="ph-bold ph-sign-out text-lg"></i>
+                خروج
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen relative z-10 w-full overflow-hidden">
+        
+        <header class="h-20 glass-panel lg:border-t-0 lg:border-x-0 lg:rounded-b-3xl lg:mx-4 mt-0 mb-4 px-4 sm:px-6 flex items-center justify-between z-30 shrink-0">
+            <div class="flex items-center gap-3">
+                <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl bg-white/50 dark:bg-white/5 text-slate-800 dark:text-white shadow-sm border border-slate-200 dark:border-white/10">
+                    <i class="ph-bold ph-list text-2xl"></i>
+                </button>
+                <h2 id="header-title" class="text-xl font-bold tracking-tight text-slate-800 dark:text-white hidden sm:block">داشبورد</h2>
+            </div>
+
+            <div class="flex items-center gap-3 sm:gap-4">
+                <div class="relative hidden md:block">
+                    <i class="ph-regular ph-magnifying-glass absolute right-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="جستجوی سریع..." class="bg-white/60 dark:bg-slate-800/50 border border-slate-200 dark:border-white/10 focus:border-primary rounded-xl py-2.5 pr-11 pl-4 text-sm outline-none w-64 transition-all text-slate-800 dark:text-white shadow-sm">
+                </div>
+                
+                <button id="themeToggleBtn" class="w-11 h-11 rounded-xl flex items-center justify-center bg-white/60 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 shrink-0 shadow-sm">
+                    <i class="ph-fill ph-moon text-xl block dark:hidden text-slate-700"></i>
+                    <i class="ph-fill ph-sun text-xl hidden dark:block text-yellow-400"></i>
+                </button>
+
+                <button class="relative w-11 h-11 rounded-xl flex items-center justify-center bg-white/60 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-white/10 transition-colors border border-slate-200 dark:border-white/10 shrink-0 shadow-sm">
+                    <i class="ph-duotone ph-bell text-xl text-slate-700 dark:text-slate-200"></i>
+                    <span class="absolute top-2.5 right-3 w-2.5 h-2.5 bg-rose-500 rounded-full shadow-sm border-2 border-white dark:border-slate-800"></span>
+                </button>
+
+                <div class="h-8 w-px bg-slate-200 dark:bg-white/10 mx-1 hidden sm:block"></div>
+
+                <div class="flex items-center gap-3 cursor-pointer group shrink-0">
+                    <div class="text-left hidden sm:block">
+                        <p class="text-sm font-bold text-slate-800 dark:text-white leading-tight">امیر محمدی</p>
+                        <p class="text-[11px] text-primary font-bold mt-0.5">مدیر ارشد</p>
+                    </div>
+                    <img src="https://i.pravatar.cc/150?img=11" alt="avatar" class="w-11 h-11 rounded-xl object-cover border border-slate-200 dark:border-white/20 shadow-sm group-hover:shadow-md transition-shadow">
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto px-4 sm:px-6 pb-10 w-full" id="main-container">
+            
+            <div id="page-dashboard" class="page-content active space-y-6">
+                
+                <!-- ================= ROW 1: 4 STAT CARDS (PURE FLEXBOX FIX) ================= -->
+                <!-- Removed position: absolute entirely for inner items -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 w-full">
+                    
+                    <!-- Card 1 -->
+                    <!-- flex justify-between items-center automatically handles LTR/RTL correctly -->
+                    <div class="glass-panel rounded-3xl p-5 sm:p-6 flex justify-between items-center relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                        <!-- Background glow effect (keep absolute, it's just background) -->
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-orange-500/20 rounded-full blur-2xl group-hover:bg-orange-500/30 transition-all pointer-events-none"></div>
+                        
+                        <!-- Text Side -->
+                        <div class="relative z-10 flex flex-col justify-center">
+                            <p class="text-[13px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 whitespace-nowrap">نیاز به بررسی</p>
+                            <h3 class="text-3xl font-black text-slate-800 dark:text-white leading-none">0</h3>
+                        </div>
+                        
+                        <!-- Icon Side (Pure Flex, no absolute positioning) -->
+                        <div class="relative z-10 flex items-center justify-center w-[52px] h-[52px] rounded-2xl bg-orange-50 dark:bg-orange-500/10 border border-orange-100 dark:border-orange-500/20 shrink-0 shadow-sm">
+                            <i class="ph-duotone ph-warning-circle text-[32px] text-orange-500 leading-none"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 2 -->
+                    <div class="glass-panel rounded-3xl p-5 sm:p-6 flex justify-between items-center relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/20 rounded-full blur-2xl group-hover:bg-emerald-500/30 transition-all pointer-events-none"></div>
+                        
+                        <div class="relative z-10 flex flex-col justify-center">
+                            <p class="text-[13px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 whitespace-nowrap">سرویس‌های فعال</p>
+                            <h3 class="text-3xl font-black text-slate-800 dark:text-white leading-none">23</h3>
+                        </div>
+                        
+                        <div class="relative z-10 flex items-center justify-center w-[52px] h-[52px] rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/20 shrink-0 shadow-sm">
+                            <i class="ph-duotone ph-check-circle text-[32px] text-emerald-500 leading-none"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 3 -->
+                    <div class="glass-panel rounded-3xl p-5 sm:p-6 flex justify-between items-center relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-primary/20 rounded-full blur-2xl group-hover:bg-primary/30 transition-all pointer-events-none"></div>
+                        
+                        <div class="relative z-10 flex flex-col justify-center">
+                            <p class="text-[13px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 whitespace-nowrap">تیکت‌های باز</p>
+                            <h3 class="text-3xl font-black text-slate-800 dark:text-white leading-none">9</h3>
+                        </div>
+                        
+                        <div class="relative z-10 flex items-center justify-center w-[52px] h-[52px] rounded-2xl bg-sky-50 dark:bg-primary/10 border border-sky-100 dark:border-primary/20 shrink-0 shadow-sm">
+                            <i class="ph-duotone ph-chats-circle text-[32px] text-primary leading-none"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Card 4 -->
+                    <div class="glass-panel rounded-3xl p-5 sm:p-6 flex justify-between items-center relative overflow-hidden group hover:-translate-y-1 transition-transform">
+                        <div class="absolute -right-6 -top-6 w-24 h-24 bg-rose-500/20 rounded-full blur-2xl group-hover:bg-rose-500/30 transition-all pointer-events-none"></div>
+                        
+                        <div class="relative z-10 flex flex-col justify-center">
+                            <p class="text-[13px] font-bold text-slate-500 dark:text-slate-400 mb-1.5 whitespace-nowrap">سفارشات معلق</p>
+                            <h3 class="text-3xl font-black text-slate-800 dark:text-white leading-none">12</h3>
+                        </div>
+                        
+                        <div class="relative z-10 flex items-center justify-center w-[52px] h-[52px] rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-100 dark:border-rose-500/20 shrink-0 shadow-sm">
+                            <i class="ph-duotone ph-clock-countdown text-[32px] text-rose-500 leading-none"></i>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= ROW 2: FULL WIDTH LINE CHART ================= -->
+                <section class="w-full glass-panel rounded-3xl p-5 sm:p-8 flex flex-col relative overflow-hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 pb-4 gap-4 border-b border-slate-200 dark:border-white/10 relative z-10">
+                        <div>
+                            <h3 class="font-bold text-xl text-slate-800 dark:text-white">روند درآمد کل</h3>
+                            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">مجموع درآمدهای سیستم در بازه زمانی (تومان)</p>
+                        </div>
+                        <div class="bg-slate-100 dark:bg-slate-800/50 p-1 rounded-xl flex items-center text-sm font-bold border border-slate-200 dark:border-white/5">
+                            <button class="px-5 py-2 rounded-lg bg-white dark:bg-primary text-primary dark:text-white shadow-sm transition-colors">هفتگی</button>
+                            <button class="px-5 py-2 rounded-lg text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-colors">ماهانه</button>
+                        </div>
+                    </div>
+                    
+                    <!-- w-full to make it full width -->
+                    <div class="relative w-full h-[320px] sm:h-[400px] z-10">
+                        <canvas id="mainLineChart" style="width: 100%; height: 100%;"></canvas>
+                    </div>
+                </section>
+
+                <!-- ================= ROW 3: FULL WIDTH DONUT & INFO ================= -->
+                <section class="w-full glass-panel rounded-3xl p-5 sm:p-8 flex flex-col">
+                    <h3 class="font-bold text-xl text-slate-800 dark:text-white mb-8 border-b border-slate-200 dark:border-white/10 pb-4">توزیع و وضعیت سرویس‌ها</h3>
+                    
+                    <div class="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 w-full">
+                        <div class="w-full lg:w-1/3 flex justify-center items-center relative">
+                            <div class="relative w-[260px] h-[260px]">
+                                <canvas id="mainDonutChart"></canvas>
+                                <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                    <span class="text-4xl font-black text-slate-800 dark:text-white drop-shadow-sm">100%</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400 font-bold mt-1">کل سرویس‌ها</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full lg:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-5">
+                            <div class="bg-slate-100/50 dark:bg-slate-800/40 border border-slate-200 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between hover:-translate-y-1 transition-transform">
+                                <div class="flex items-center gap-4">
+                                    <span class="w-4 h-4 rounded-full bg-primary shadow-sm"></span>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-700 dark:text-slate-200">V2Ray</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">پروتکل پایه</p>
+                                    </div>
+                                </div>
+                                <span class="font-black text-2xl text-slate-800 dark:text-white">65%</span>
+                            </div>
+
+                            <div class="bg-slate-100/50 dark:bg-slate-800/40 border border-slate-200 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between hover:-translate-y-1 transition-transform">
+                                <div class="flex items-center gap-4">
+                                    <span class="w-4 h-4 rounded-full bg-orange-500 shadow-sm"></span>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-700 dark:text-slate-200">Wireguard</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">سرویس گیمینگ</p>
+                                    </div>
+                                </div>
+                                <span class="font-black text-2xl text-slate-800 dark:text-white">25%</span>
+                            </div>
+
+                            <div class="bg-slate-100/50 dark:bg-slate-800/40 border border-slate-200 dark:border-white/5 rounded-2xl p-5 flex items-center justify-between hover:-translate-y-1 transition-transform">
+                                <div class="flex items-center gap-4">
+                                    <span class="w-4 h-4 rounded-full bg-emerald-500 shadow-sm"></span>
+                                    <div>
+                                        <p class="text-sm font-bold text-slate-700 dark:text-slate-200">OpenVPN</p>
+                                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">شبکه کلاسیک</p>
+                                    </div>
+                                </div>
+                                <span class="font-black text-2xl text-slate-800 dark:text-white">10%</span>
+                            </div>
+
+                            <div class="bg-gradient-to-l from-primary/10 to-transparent border border-primary/20 rounded-2xl p-5 flex items-center justify-between relative overflow-hidden">
+                                <i class="ph-fill ph-trend-up text-7xl text-primary/10 absolute -right-2 -bottom-2"></i>
+                                <div class="relative z-10">
+                                    <p class="text-xs font-bold text-primary mb-1">بیشترین تقاضا در این ماه</p>
+                                    <p class="text-lg font-black text-slate-800 dark:text-white">V2Ray - پلن ۳ ماهه VIP</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                
+            </div>
+            
+            <div id="page-services" class="page-content space-y-6"><div class="flex justify-center items-center h-[70vh] glass-panel rounded-3xl"><h2 class="text-3xl font-black text-slate-800 dark:text-white">لیست سرویس‌ها</h2></div></div>
+            <div id="page-users" class="page-content space-y-6"><div class="flex justify-center items-center h-[70vh] glass-panel rounded-3xl"><h2 class="text-3xl font-black text-slate-800 dark:text-white">مدیریت کاربران</h2></div></div>
+            <div id="page-settings" class="page-content space-y-6"><div class="flex justify-center items-center h-[70vh] glass-panel rounded-3xl"><h2 class="text-3xl font-black text-slate-800 dark:text-white">پیکربندی سیستم</h2></div></div>
+        </div>
+    </main>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('mobile-overlay');
+        function toggleSidebar() {
+            sidebar.classList.toggle('translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        const htmlElement = document.documentElement;
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        let isDark = htmlElement.classList.contains('dark');
+
+        themeToggleBtn.addEventListener('click', () => {
+            isDark = !isDark;
+            if (isDark) htmlElement.classList.add('dark');
+            else htmlElement.classList.remove('dark');
+            updateCharts();
+        });
+
+        const navItems = document.querySelectorAll('.nav-item[data-page]');
+        const pages = document.querySelectorAll('.page-content');
+        const headerTitle = document.getElementById('header-title');
+
+        const pageTitles = {
+            'dashboard': 'داشبورد', 'services': 'مدیریت سرویس‌ها', 'users': 'مدیریت کاربران', 'settings': 'پیکربندی'
+        };
+
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = item.getAttribute('data-page');
+
+                navItems.forEach(nav => {
+                    nav.classList.remove('active');
+                    const icon = nav.querySelector('i');
+                    if(icon) { icon.classList.remove('ph-fill'); icon.classList.add('ph-duotone'); }
+                });
+                
+                item.classList.add('active');
+                const icon = item.querySelector('i');
+                if(icon) { icon.classList.remove('ph-duotone'); icon.classList.add('ph-fill'); }
+
+                if(pageTitles[target]) headerTitle.textContent = pageTitles[target];
+
+                pages.forEach(p => p.classList.remove('active'));
+                const activePage = document.getElementById('page-' + target);
+                if(activePage) activePage.classList.add('active');
+                
+                if(window.innerWidth < 1024) toggleSidebar();
+            });
+        });
+
+        let lineChart, donutChart;
+
+        function getColors() {
+            const dark = document.documentElement.classList.contains('dark');
+            return {
+                text: dark ? '#94a3b8' : '#64748b',
+                grid: dark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                tooltipBg: dark ? 'rgba(15,23,42,0.95)' : 'rgba(255,255,255,0.95)',
+                tooltipText: dark ? '#f8fafc' : '#0f172a',
+                lineBorder: dark ? '#38bdf8' : '#0ea5e9'
+            }
+        }
+
+        function initCharts() {
+            Chart.defaults.font.family = 'Vazirmatn';
+            Chart.defaults.rtl = true;
+            const c = getColors();
+
+            const ctxLine = document.getElementById('mainLineChart').getContext('2d');
+            let gradient = ctxLine.createLinearGradient(0, 0, 0, 400);
+            gradient.addColorStop(0, 'rgba(14, 165, 233, 0.4)'); 
+            gradient.addColorStop(1, 'rgba(14, 165, 233, 0.0)');
+
+            lineChart = new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: ['شنبه', 'یکشنبه', 'دوشنبه', 'سه شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه'],
+                    datasets: [{
+                        label: 'درآمد (تومان)',
+                        data: [1500000, 2800000, 1900000, 3500000, 2200000, 4100000, 3100000],
+                        borderColor: c.lineBorder,
+                        backgroundColor: gradient,
+                        fill: true,
+                        borderWidth: 3,
+                        tension: 0.4, 
+                        pointBackgroundColor: c.lineBorder,
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 0, 
+                        pointHoverRadius: 6, 
+                        pointHitRadius: 20 
+                    }]
+                },
+                options: {
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    layout: { padding: 0 },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: c.tooltipBg, titleColor: c.tooltipText, bodyColor: c.tooltipText,
+                            padding: 12, cornerRadius: 10, titleFont: {size: 14}, bodyFont: {size: 13, weight: 'bold'},
+                            borderColor: 'rgba(0,0,0,0.1)', borderWidth: 1, displayColors: false
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            grid: { display: false }, 
+                            border: {display: false}, 
+                            ticks: {color: c.text, font: {size: 13}} 
+                        },
+                        y: { 
+                            position: 'right', // Forcing Y-axis to the right fixes the RTL squish bug
+                            grid: { color: c.grid, drawBorder: false }, 
+                            border: {display: false}, 
+                            ticks: {color: c.text, font: {size: 13}} 
+                        }
+                    }
+                }
+            });
+
+            const ctxDonut = document.getElementById('mainDonutChart').getContext('2d');
+            donutChart = new Chart(ctxDonut, {
+                type: 'doughnut',
+                data: {
+                    labels: ['V2Ray', 'Wireguard', 'OpenVPN'],
+                    datasets: [{
+                        data: [65, 25, 10],
+                        backgroundColor: ['#0ea5e9', '#f97316', '#10b981'],
+                        borderWidth: 0, hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false, cutout: '78%',
+                    plugins: { legend: { display: false }, tooltip: {
+                        backgroundColor: c.tooltipBg, titleColor: c.tooltipText, bodyColor: c.tooltipText, cornerRadius: 8
+                    }}
+                }
+            });
+        }
+
+        function updateCharts() {
+            if(!lineChart || !donutChart) return;
+            const c = getColors();
+            
+            lineChart.options.scales.x.ticks.color = c.text;
+            lineChart.options.scales.y.ticks.color = c.text;
+            lineChart.options.scales.y.grid.color = c.grid;
+            lineChart.data.datasets[0].borderColor = c.lineBorder;
+            lineChart.data.datasets[0].pointBackgroundColor = c.lineBorder;
+            
+            lineChart.options.plugins.tooltip.backgroundColor = c.tooltipBg;
+            lineChart.options.plugins.tooltip.titleColor = c.tooltipText;
+            lineChart.options.plugins.tooltip.bodyColor = c.tooltipText;
+            lineChart.update();
+
+            donutChart.options.plugins.tooltip.backgroundColor = c.tooltipBg;
+            donutChart.options.plugins.tooltip.titleColor = c.tooltipText;
+            donutChart.options.plugins.tooltip.bodyColor = c.tooltipText;
+            donutChart.update();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => { setTimeout(initCharts, 100); });
+    </script>
+</body>
+</html>
+
+
+
